@@ -7,7 +7,8 @@
 
 ;; ================ DATA DEFINITIONS: ================
 
-(define-struct tet [hand blocks])
+(define-struct tet [hand blocks]
+  #:transparent)
 ;; Tetr is a Structure
 ;; (make-tetr (Posn, ListOf(Posn))
 ;; Implementation:

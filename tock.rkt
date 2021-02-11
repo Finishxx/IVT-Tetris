@@ -26,12 +26,10 @@
   (cond
     [(is-blocked? (tet-hand tet) (tet-blocks tet))
      (make-tet (make-posn 5 22) (cond
-                                  [(clear-row? (tet-hand tet) (tet-blocks tet)) (clear-row! (tet-hand tet) (tet-blocks tet))]
+                                  [(clear-row? (append (list (tet-hand tet)) (tet-blocks tet)) 1) (clear-row! (append (list (tet-hand tet)) (tet-blocks tet)) 1)]
                                   [else (block (tet-hand tet) (tet-blocks tet))]))]
     [else
      (make-tet (fall (tet-hand tet)) (tet-blocks tet))]))
-
-
 
 ;; Posn(tet-hand) ListOf(Posn)(tet-blocks) -> Bool
 ;; Returns true if either one of these is true:
@@ -75,20 +73,37 @@
   (append blocks (list hand)))
   
 
-;; Posn(hand) ListOf(posn)(blocks) -> Bool
+;; ListOf(posn)(blocks) Num -> Bool
 ;; checks if a row of 10 is cleared
 ;; checks the row on the hand-x if it is full
-(define (clear-row? hand blocks)
-  #f)
+(define (clear-row? blocks y)
+  (cond
+    [(is-ten? blocks y) #t]
+    [(= y 20) #f]
+    [else (clear-row? blocks (+ y 1))]))
+
+;; ListOfPosn Num -> Bool
+;; checks if there is 10 blocks on one row given the blocks and row num
+(define (is-ten? blocks y)
+  (= 10 (length (select-row blocks y))))
+
+;; ListOfPosn Num -> ListOfPosn
+;; selects all blocks that are in y row from blocks
+(define (select-row blocks y)
+  (filter (lambda (arg) (= (posn-y arg) y)) blocks))
 
 
 
 
-;; Posn(hand) ListOf(posn)(blocks) -> ListOf(posn)(blocks)
+;; ListOf(posn)(blocks) Num -> ListOf(posn)(blocks)
 ;; clears a row of 10 and lets the other blocks fall down
 ;; every block higher than hand(x y) goes (x y-1)
-(define (clear-row! hand blocks)
-  #t)
+(define (clear-row! blocks)
+  (cond
+    [#t]
+    [#t]
+    [#t]))
 
-
-
+;; ListOfPosn ListOfPosn -> ListOfPosn
+(define (kill-row blocks row)
+  (#t))
