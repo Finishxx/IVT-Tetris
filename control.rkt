@@ -63,5 +63,5 @@
 ;; 2. There are some blocks -> Depends
 (define (move-down hand blocks)
   (cond
-    [(is-blocked? hand blocks) (make-tet (make-posn 5 22) (block hand blocks))]
+    [(is-blocked? hand blocks) (block-row hand blocks)]
     [else (make-tet (make-posn (posn-x hand) (- (posn-y hand) 1)) blocks)]))

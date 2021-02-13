@@ -186,6 +186,14 @@
               (block (tet-hand TOCK-B-EX5) (tet-blocks TOCK-B-EX5))
               (list (make-posn 10 1) (make-posn 10 2))))
   (test-suite
+   "block-row"
+   (test-equal? "1 1; empty -> 5 22; 1 1"
+                (block-row (make-posn 1 1) (list))
+                (make-tet (make-posn 5 22) (list (make-posn 1 1))))
+   (test-equal? "10 1; ONE-ROW except 10 1 -> 5 22; empty"
+                (block-row (make-posn 10 1) (rest ONE-ROW))
+                (make-tet (make-posn 5 22) (list))))
+  (test-suite
    "Clear-row?"
    (test-equal? "1 row; 1 -> #t"
               (clear-row? ONE-ROW 1)

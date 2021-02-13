@@ -25,10 +25,7 @@
 (define (tock tet)
   (cond
     [(is-blocked? (tet-hand tet) (tet-blocks tet))
-     (make-tet (make-posn 5 22) (cond
-                                  [(clear-row? (append (list (tet-hand tet)) (tet-blocks tet)) 0)
-                                   (clear-row! (append (list (tet-hand tet)) (tet-blocks tet)) (which-row (append (list (tet-hand tet)) (tet-blocks tet)) 1))]
-                                  [else (block (tet-hand tet) (tet-blocks tet))]))]
+     (block-row (tet-hand tet) (tet-blocks tet))]
     [else
      (make-tet (fall (tet-hand tet)) (tet-blocks tet))]))
 
@@ -42,6 +39,15 @@
     [(= (posn-y hand) 1) #t]
     [(aux-blocked? (make-posn (posn-x hand) (- (posn-y hand) 1)) blocks) #t] ;; the hard part
     [else #f]))
+
+
+;; Posn ListOfPosn -> Tet
+;; spawns a new block and puts the previou one on the field or clears row with it
+(define (block-row hand blocks)
+  (make-tet (make-posn 5 22) (cond
+                                  [(clear-row? (append (list hand) blocks) 0)
+                                   (clear-row! (append (list hand) blocks) (which-row (append (list hand) blocks) 1))]
+                                  [else (block hand blocks)])))
 
 
 
