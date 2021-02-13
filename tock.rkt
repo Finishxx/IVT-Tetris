@@ -26,7 +26,8 @@
   (cond
     [(is-blocked? (tet-hand tet) (tet-blocks tet))
      (make-tet (make-posn 5 22) (cond
-                                  [(clear-row? (append (list (tet-hand tet)) (tet-blocks tet)) 1) (clear-row! (append (list (tet-hand tet)) (tet-blocks tet)) 1)]
+                                  [(clear-row? (append (list (tet-hand tet)) (tet-blocks tet)) 0)
+                                   (clear-row! (append (list (tet-hand tet)) (tet-blocks tet)) (which-row (append (list (tet-hand tet)) (tet-blocks tet)) 1))]
                                   [else (block (tet-hand tet) (tet-blocks tet))]))]
     [else
      (make-tet (fall (tet-hand tet)) (tet-blocks tet))]))
@@ -79,8 +80,28 @@
 (define (clear-row? blocks y)
   (cond
     [(is-ten? blocks y) #t]
-    [(= y 20) #f]
+    [(>= y 20) #f]
     [else (clear-row? blocks (+ y 1))]))
+
+;; ListOf(posn)(blocks) Num -> ListOf(posn)(blocks)
+;; clears a row of 10 and lets the other blocks fall down
+;; every block higher than hand(x y) goes (x y-1)
+(define (clear-row! blocks target)
+  (cond
+    [(number? target)
+     (clear-row! (dirty-work blocks target) (which-row (dirty-work blocks target) 1))]
+    [else blocks]))
+
+(define (dirty-work blocks target)
+  (move-row (kill-row blocks (select-row blocks target)) target))
+
+;; ListOfPosn Num -> Num
+;; returns y pos of the first row from bottom that is full
+(define (which-row blocks y)
+  (cond
+    [(is-ten? blocks y) y]
+    [(>= y 20) #f]
+    [else (which-row blocks (+ y 1))]))
 
 ;; ListOfPosn Num -> Bool
 ;; checks if there is 10 blocks on one row given the blocks and row num
@@ -93,17 +114,31 @@
   (filter (lambda (arg) (= (posn-y arg) y)) blocks))
 
 
+;; ListOfPosn ListOfPosn Num -> ListOfPosn
+;; select all rows above y and stores them into rows
+(define (select-above blocks rows y)
+  (cond [(< y 22) (select-above blocks (append rows (select-row blocks y)) (+ 1 y))]
+        [else rows]))
 
+(define (select-below blocks rows y)
+  (cond [(> y 0) (select-below blocks (append rows (select-row blocks y)) (- y 1))]
+        [else rows]))
 
-;; ListOf(posn)(blocks) Num -> ListOf(posn)(blocks)
-;; clears a row of 10 and lets the other blocks fall down
-;; every block higher than hand(x y) goes (x y-1)
-(define (clear-row! blocks)
-  (cond
-    [#t]
-    [#t]
-    [#t]))
 
 ;; ListOfPosn ListOfPosn -> ListOfPosn
+;; given a list of blocks deletes them
 (define (kill-row blocks row)
-  (#t))
+  (remove* row blocks))
+
+
+;; ListOfPosn Num -> ListOfPosn
+;; given a list of blocks moves all above the y (posn x y-1)
+;; selects the row above the deleted one and goes on untill row 21
+(define (move-row blocks y)
+  (append (select-below blocks (list) y) (fall-down (select-above blocks (list) y))))
+
+;; ListOfPosn
+;; Given a row of blocks moves them down by (posn x -1)
+(define (fall-down blocks)
+  (map (lambda (arg)
+         (make-posn (posn-x arg) (- (posn-y arg) 1))) blocks))
