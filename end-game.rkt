@@ -2,8 +2,7 @@
 
 (require 2htdp/image
          "const+aux.rkt"
-         lang/posn
-         test-engine/racket-gui)
+         lang/posn)
 (provide (all-defined-out))
 
 ;; end-game:
@@ -31,4 +30,4 @@
 ;; Posn(posn-y(tet-blocks)) -> Bool
 ;; returns true, if y is >= 21
 (define (posn>=21? pos)
-  (>= (posn-y pos) 21))
+  (>= (posn-y (block-posn pos)) 21))

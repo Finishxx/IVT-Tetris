@@ -7,13 +7,25 @@
 
 ;; ================ DATA DEFINITIONS: ================
 
-(define-struct tet [hand blocks]
+(define-struct block [posn col]
   #:transparent)
-;; Tetr is a Structure
-;; (make-tetr (Posn, ListOf(Posn))
+;; Block is a Structure
+;; (make-block (Posn, String)
 ;; Implementation:
-;; tetr-hand describes where the current falling controllable block is located
-;; tetr-blocks describes where the other already fallen blocks are
+;; Posn describes the position of a block
+;; Col describes the color of the block
+;; col is an enumeration:
+;; [light blue, dark blue, orange, yellow, green, red, magenta]
+
+(define-struct tet [hand blocks bag score]
+  #:transparent)
+;; Tet is a Structure
+;; (make-tet (ListOfBlock, ListOfBlock, ListOfListOfBlock, Num)
+;; Implementation:
+;; tet-hand describes where the current falling controllable tetriminos are located and their color
+;; tet-blocks describes where the other already fallen blocks are + their color
+;; tet-bag describes what the next tetriminos are
+;; tet-score describes the current score of the player
 
 ;;================ Quality of life aux. functions: ================
 ;; debatable, if tests are valid here, still should fit in somehow ̄\_(ツ)_/̄
@@ -70,7 +82,7 @@
 
 
 ;; ================ Mathematical constants (mostly): ================
-(define CUBE-LENGTH 10)
+(define CUBE-LENGTH 20)
 (define SCENE-WIDTH-INDEX 20)
 (define SCENE-HEIGHT-INDEX 30)
 (define SCENE-WIDTH (* SCENE-WIDTH-INDEX CUBE-LENGTH))
@@ -82,7 +94,8 @@
 
 (define X-OFFSET (* 4.5 CUBE-LENGTH)) ;; breaks when SCENE-WIDTH//HEIGHT-INDEX is changed, careful!!! 
 (define Y-OFFSET (* 25.7 CUBE-LENGTH)) ;; breaks when SCENE-WIDTH//HEIGHT-INDEX is changed, careful!!! 
-  
+(define MID-HEIGTH (- Y-OFFSET (- SCENE-HEIGHT Y-OFFSET) CUBE-LENGTH))
+
 ;; these are just for drawing purposes and they mean how many || are there to each axis in a grid
 (define X-LINES 20)
 (define Y-LINES 10)
@@ -93,23 +106,57 @@
 
 ;; ================ Graphical constants (mostly): ================
 
-(define BLOCK (square CUBE-LENGTH "solid" "red"))
+(define (draw-block col)
+  (square CUBE-LENGTH "solid" col))
 (define BORDER (rectangle (* Y-LINES CUBE-LENGTH) (* (+ X-LINES SHIVER) CUBE-LENGTH) "outline" "black"))
 (define GRID-X
   (aux-grid-x 0 BORDER))
 (define GRID-Y
   (aux-grid-y 0 BORDER))
 (define GRID (aux-grid-x 0 (aux-grid-y 1 BORDER)))
-(define WHITE-SPACE (rectangle (half SCENE-WIDTH) (- SCENE-HEIGHT Y-OFFSET) "solid" "white"))
+(define TOP-SPACE (rectangle SCENE-WIDTH (half (- SCENE-HEIGHT (image-height GRID))) "solid" "blue"))
+(define TETRIS-SPACE (overlay
+                      (text "Tetris" (* 3.6 CUBE-LENGTH) "black")
+                      TOP-SPACE))
+(define PREVIEW-WINDOW (overlay
+                        (rectangle (* 15 CUBE-LENGTH) (* 3.5 CUBE-LENGTH) "outline" "black")
+                        (rectangle (* 15 CUBE-LENGTH) (* 3.5 CUBE-LENGTH) "solid" "white")))
+
 
 ;;================ Pictures: ================
 ;; Basic layout:
 (define LAYOUT (place-image GRID HALF-SCENE-WIDTH HALF-SCENE-HEIGHT MTSC))
 
+(define ADV-MTSC (above (beside (rectangle (* 5 CUBE-LENGTH) (image-height GRID) "solid" "light blue")
+                                (rectangle (* 10 CUBE-LENGTH) (image-height GRID) "solid" "white")
+                                (rectangle (* 5 CUBE-LENGTH) (image-height GRID) "solid" "light blue"))
+                        TOP-SPACE))
+
+
+(define PLACED-MTSC (place-image ADV-MTSC HALF-SCENE-WIDTH (+ HALF-SCENE-HEIGHT (half (image-height TOP-SPACE))) MTSC))
+
+(define PLACED-MTSC-PREVIEW (place-image
+                             PREVIEW-WINDOW
+                             HALF-SCENE-WIDTH
+                             (* 27.5 CUBE-LENGTH)
+                             PLACED-MTSC))
+
+
+
+(define FINAL-LAYOUT (place-image GRID HALF-SCENE-WIDTH HALF-SCENE-HEIGHT PLACED-MTSC))
+
+
 ;; ================ Testing sets: ================
 
-
-
+;; Blocks, Posn -> Blocks
+;; moves a tetrimino by posn-x and posn-y
+(define (block-placement blocks posn)
+  (map (lambda (block)
+         (make-block (make-posn
+                      (+ (posn-x (block-posn block)) (posn-x posn))
+                      (+ (posn-y (block-posn block)) (posn-y posn)))
+                      (block-col block)))
+       blocks))
 
                    
 

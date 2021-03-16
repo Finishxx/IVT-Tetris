@@ -6,7 +6,8 @@
          "draw.rkt"
          "tock.rkt"
          "control.rkt"
-         "end-game.rkt")
+         "end-game.rkt"
+         "tetriminos.rkt")
 
 
 
@@ -63,7 +64,7 @@
     [stop-when end-game?]))
 
 (define NORMAL-START
-  (tet-main (make-tet (make-posn 5 21) '())))
+  (tet-main (make-tet (first DEFAULT-BAG) '() (rest DEFAULT-BAG) 0)))
 
 
 
@@ -71,5 +72,5 @@
 ;; 1. blocks above 21 should be obstructed by something as they are drawin in function draw ✓
 ;; 2. finish stop-when function ✓
 ;; 3. find the right tick-rate ✓
-;; 4. lmao forgot about row clear HOHOHO
-;; 5. add connect-10 to tock and fall-down to control
+;; 4. lmao forgot about row clear HOHOHO ✓
+;; 5. add connect-10 to tock and fall-down to control ✓

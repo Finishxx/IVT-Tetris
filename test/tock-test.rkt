@@ -6,23 +6,26 @@
          2htdp/image
          "../tock.rkt"
          "../const+aux.rkt"
-         racket/struct)
+         racket/struct
+         "../tetriminos.rkt")
 
+;; need tests for tock
 
 ;; tock:
 ;; falls:
-(define TOCK-F-EX1 (make-tet (make-posn 5 21) (list)))
-(define TOCK-F-EX2 (make-tet (make-posn 5 3) (list (make-posn 5 1))))
-(define TOCK-F-EX3 (make-tet (make-posn 1 10) (list (make-posn 1 8))))
+(define TOCK-F-EX1 (make-tet (list (make-block (make-posn 5 21) "light blue")) (list) DEFAULT-BAG 0))
+(define TOCK-F-EX2 (make-tet (list (make-block (make-posn 5 3) "light blue")) (list (make-block (make-posn 5 1) "light blue")) DEFAULT-BAG 0))
+(define TOCK-F-EX3 (make-tet (make-posn 1 10) (list (make-posn 1 8)) #t #t))
 (define TOCK-F-EX4 (make-tet (make-posn 5 3)
-                             (list (make-posn 4 3) (make-posn 4 2) (make-posn 4 1) (make-posn 6 3)  (make-posn 6 2) (make-posn 6 1) (make-posn 5 1))))
+                             (list (make-posn 4 3) (make-posn 4 2) (make-posn 4 1) (make-posn 6 3)  (make-posn 6 2) (make-posn 6 1) (make-posn 5 1))
+                             #t #t))
 
 ;; is blocked:
-(define TOCK-B-EX1 (make-tet (make-posn 1 2) (list (make-posn 1 1))))
-(define TOCK-B-EX2 (make-tet (make-posn 5 1) (list)))
-(define TOCK-B-EX3 (make-tet (make-posn 1 1) (list)))
-(define TOCK-B-EX4 (make-tet (make-posn 5 15) (list (make-posn 5 14))))
-(define TOCK-B-EX5 (make-tet (make-posn 10 2) (list (make-posn 10 1))))
+(define TOCK-B-EX1 (make-tet (make-posn 1 2) (list (make-posn 1 1)) #t #t))
+(define TOCK-B-EX2 (make-tet (make-posn 5 1) (list) #t #t))
+(define TOCK-B-EX3 (make-tet (make-posn 1 1) (list) #t #t))
+(define TOCK-B-EX4 (make-tet (make-posn 5 15) (list (make-posn 5 14)) #t #t))
+(define TOCK-B-EX5 (make-tet (make-posn 10 2) (list (make-posn 10 1)) #t #t))
 
 ;; aux for building rows
 ;; Num Num Num List -> ListOfPosn
@@ -30,14 +33,14 @@
   (cond
     [(and (<= 10 x) (= y max)) lst]
     [(<= 10 x) (make-row 0 (+ 1 y) max lst)]
-    [else (make-row (+ 1 x) y max (append (list (make-posn (+ x 1) y)) lst))]))
+    [else (make-row (+ 1 x) y max (append (list (make-block (make-posn (+ x 1) y) "red") lst)))]))
 
 ;; clear-row?/clear-row!
-(define ONE-ROW (make-row 0 1 1 (list)))
-(define TWO-ROW (make-row 0 1 2 (list)))
-(define THREE-ROW (make-row 0 1 3 (list)))
-(define ONLY-SECOND-ROW (make-row 0 2 2 (list)))
-(define ONLY-THIRD-ROW (make-row 0 3 3 (list)))
+(define ONE-ROW (flatten (make-row 0 1 1 (list))))
+(define TWO-ROW (flatten (make-row 0 1 2 (list))))
+(define THREE-ROW (flatten (make-row 0 1 3 (list))))
+(define ONLY-SECOND-ROW (flatten (make-row 0 2 2 (list))))
+(define ONLY-THIRD-ROW (flatten (make-row 0 3 3 (list))))
 
 
 ;; easy sorting
@@ -49,11 +52,11 @@
 ;; sorts the list from the bottom and left by rows
 (define (sort-out blocks sorted y)
   (cond
-    [(> y (posn-y (highest-block blocks))) sorted]
+    [(> y (posn-y (block-posn (highest-block blocks)))) sorted]
     [else (sort-out
            blocks
            (append (sort (select-row blocks y)  (lambda (x y)
-                                          (< (posn-x x) (posn-x y))))
+                                          (< (posn-x (block-posn x)) (posn-x (block-posn y)))))
                    sorted)
            (+ y 1))]))
 
@@ -63,7 +66,7 @@
 ;; returns the highest y position of a block from the list
 (define (highest-block blocks)
   (last (sort blocks (lambda (x y)
-                       (< (posn-y x) (posn-y y))))))
+                       (< (posn-y (block-posn x)) (posn-y (block-posn y)))))))
 
 (test/gui
  (test-suite
@@ -72,7 +75,6 @@
   "Tock"
   (test-suite
    "Falls"
-   
 (test-equal? "a"  (make-tet (make-posn 1 1) (list)) (make-tet (make-posn 1 1) (list)))
    (test-equal? "5 21; empty -> 5 20; empty"
               (tock TOCK-F-EX1)
@@ -112,87 +114,128 @@
    "Is-blocked?"
    (test-suite
     "Falls"
-    (test-equal? "5 21; empty -> #f"
-               (is-blocked? (tet-hand TOCK-F-EX1) (tet-blocks TOCK-F-EX1))
+    (test-equal? "T in air"
+               (is-blocked? T (list))
                #f)
-    (test-equal? "5 3; 5 1 -> #f"
-               (is-blocked? (tet-hand TOCK-F-EX2) (tet-blocks TOCK-F-EX2))
+    (test-equal? "I one above L"
+               (is-blocked? (block-placement I (make-posn 0 -16))
+                            (block-placement L (make-posn 0 -19)))
                #f)
-    (test-equal? "1 10; 1 8 -> #f"
-               (is-blocked? (tet-hand TOCK-F-EX3) (tet-blocks TOCK-F-EX3))
-               #f)
-    (test-equal? "5 3; blocked from sides -> #f"
-               (is-blocked? (tet-hand TOCK-F-EX4) (tet-blocks TOCK-F-EX4))
+    (test-equal? "O one above ground"
+               (is-blocked? (block-placement O (make-posn 0 -19))
+                            (list))
                #f))
    (test-suite
     "Blocked"
-    (test-equal? "1 2; 1 1 -> #t"
-               (is-blocked? (tet-hand TOCK-B-EX1) (tet-blocks TOCK-B-EX1))
+    (test-equal? "Z on ground"
+               (is-blocked? (block-placement Z (make-posn 0 -20))
+                            (list))
                #t)
-    (test-equal? "5 1; empty -> #t"
-               (is-blocked? (tet-hand TOCK-B-EX2) (tet-blocks TOCK-B-EX2))
+    (test-equal? "S on top of J"
+               (is-blocked? (block-placement S (make-posn 0 -18))
+                            (block-placement J (make-posn 0 -20)))
                #t)
-    (test-equal? "1 1; empty -> #t"
-               (is-blocked? (tet-hand TOCK-B-EX3) (tet-blocks TOCK-B-EX3))
-               #t)
-    (test-equal? "5 15; 5 14 -> #t"
-               (is-blocked? (tet-hand TOCK-B-EX4) (tet-blocks TOCK-B-EX4))
-               #t)
-    (test-equal? "10 2; 10 1 -> #t"
-               (is-blocked? (tet-hand TOCK-B-EX5) (tet-blocks TOCK-B-EX5))
-               #t)))
+    (test-equal? "O on top of O in air"
+               (is-blocked? (block-placement O (make-posn -1 -18))
+                            (block-placement O (make-posn 0 -20)))
+               #t))
   (test-suite
    "Aux-blocked?"
-   (test-equal? "0 0; empty -> #f"
-              (aux-blocked? (make-posn 0 0) (list))
-              #f)
-   (test-equal? "0 0; 0 0 -> #t"
-              (aux-blocked? (make-posn 0 0) (list (make-posn 0 0)))
-              #t)
-   (test-equal? "0 0; 1 1, 1 2 0 0 -> #t"
-              (aux-blocked? (make-posn 0 0) (list (make-posn 1 1) (make-posn 1 2) (make-posn 0 0)))
-              #t))
+   (test-equal? "I, J"
+                (aux-blocked? I J)
+                #t)
+   (test-equal? "T+3x-2y, Z-3x-2y"
+                (aux-blocked?
+                 (block-placement T (make-posn 3 -2))
+                 (block-placement Z (make-posn -3 -2)))
+                #f)
+   (test-equal? "L-5y, J-5y"
+                (aux-blocked?
+                 (block-placement L (make-posn 0 -5))
+                 (block-placement J (make-posn 0 -5)))                          
+                #t))
+  (test-suite
+   "is-bottom?"
+   (test-equal? "I at bottom"
+                (is-bottom? (list (make-block (make-posn 5 1) "light blue")
+                                  (make-block (make-posn 5 2) "light blue")
+                                  (make-block (make-posn 5 3) "light blue")
+                                  (make-block (make-posn 5 4) "light blue")))
+                #t)
+   (test-equal? "S not bottom"
+                (is-bottom? (list (make-block (make-posn 4 3) "green")
+                                 (make-block (make-posn 5 3) "green")
+                                 (make-block (make-posn 5 2) "green")
+                                 (make-block (make-posn 6 2) "green")))
+                #f)
+   (test-equal? "O at bottom"
+                (is-bottom? (list (make-block (make-posn 9 2) "yellow")
+                                 (make-block (make-posn 10 2) "yellow")
+                                 (make-block (make-posn 9 1) "yellow")
+                                 (make-block (make-posn 10 1) "yellow")))
+                #t))
   (test-suite
    "Posn-equal?"
-   (test-equal? "1 1; 1 1 -> #t"
-              (posn-equal? (make-posn 1 1) (make-posn 1 1))
+   (test-equal? "I, block in I"
+              (posn-equal? I (make-block (make-posn 7 21) "does not matter"))
               #t)
-   (test-equal? "0 1; 1 1 -> #f"
-              (posn-equal? (make-posn 0 1) (make-posn 1 1))
+   (test-equal? "I at bottom, block not in I"
+              (posn-equal? (block-placement I (make-posn 0 -10))
+                           (make-block (make-posn 5 22) "haha"))
               #f)
-   (test-equal? "-23 10; -23 10 -> #t"
-              (posn-equal? (make-posn -23 10) (make-posn -23 10))
-              #t))
+   (test-equal? "S -10y, second Z -10y"
+              (posn-equal? (block-placement S (make-posn 0 -10))
+                           (second (block-placement Z (make-posn 0 -10))))
+              #t)))
   (test-suite
-   "Fall?"
-   (test-equal? "5 21 -> 5 20"
-              (fall (tet-hand TOCK-F-EX1))
-              (make-posn 5 20))
-   (test-equal? "5 3 -> 5 2"
-              (fall (tet-hand TOCK-F-EX2))
-              (make-posn 5 2))
-   (test-equal? "5 3 -> 5 2"
-              (fall (tet-hand TOCK-F-EX4))
-              (make-posn 5 2)))
+   "Fall"
+   (test-equal? "I"
+                (fall I)
+                (list (make-block (make-posn 4 20) "light blue")
+                      (make-block (make-posn 5 20) "light blue")
+                      (make-block (make-posn 6 20) "light blue")
+                      (make-block (make-posn 7 20) "light blue")))
+   (test-equal? "O"
+                (fall O)
+                (list (make-block (make-posn 5 21) "yellow")
+                      (make-block (make-posn 6 21) "yellow")
+                      (make-block (make-posn 5 20) "yellow")
+                      (make-block (make-posn 6 20) "yellow")))
+   (test-equal? "S"
+                (fall S)
+                (list (make-block (make-posn 5 21) "green")
+                      (make-block (make-posn 6 21) "green")
+                      (make-block (make-posn 4 20) "green")
+                      (make-block (make-posn 5 20) "green"))))
   (test-suite
-   "Block"
-   (test-equal? "1 2; 1 1 -> 1 1, 1 2"
-              (block (tet-hand TOCK-B-EX1) (tet-blocks TOCK-B-EX1))
-              (list (make-posn 1 1) (make-posn 1 2)))
-   (test-equal? "1 1; empty -> 1 1"
-              (block (tet-hand TOCK-B-EX3) (tet-blocks TOCK-B-EX3))
-              (list (make-posn 1 1)))
-   (test-equal? "10 2; 10 1 -> 10 1, 10 2"
-              (block (tet-hand TOCK-B-EX5) (tet-blocks TOCK-B-EX5))
-              (list (make-posn 10 1) (make-posn 10 2))))
+   "Block!"
+   (test-equal? "I at bottom to J at bottom"
+              (block! (block-placement I (make-posn -3 -20))
+                      (block-placement J (make-posn 0 -20)))
+              (append (block-placement I (make-posn -3 -20))
+                      (block-placement J (make-posn 0 -20))))
+   (test-equal? "O at bottom"
+              (block! (block-placement O (make-posn 0 -20))
+                      (list))
+              (block-placement O (make-posn 0 -20)))
+   (test-equal? "S on top of Z"
+              (block! (block-placement S (make-posn 0 -18))
+                      (block-placement Z (make-posn 0 -20)))
+              (append (block-placement S (make-posn 0 -18))
+                      (block-placement Z (make-posn 0 -20)))))
   (test-suite
    "block-row"
-   (test-equal? "1 1; empty -> 5 22; 1 1"
-                (block-row (make-posn 1 1) (list))
-                (make-tet (make-posn 5 22) (list (make-posn 1 1))))
-   (test-equal? "10 1; ONE-ROW except 10 1 -> 5 22; empty"
-                (block-row (make-posn 10 1) (rest ONE-ROW))
-                (make-tet (make-posn 5 22) (list))))
+   (test-equal? "T at bottom, empty, default bag, 0"
+                (block-row (block-placement T (make-posn 0 -20)) (list) DEFAULT-BAG 0)
+                (make-tet I (block-placement T (make-posn 0 -20)) (rest DEFAULT-BAG) 0))
+   (test-equal? "I, 1O 1I (clear), default bag, 0"
+                (block-row (block-placement I (make-posn -3 -20))
+                           (append (block-placement O (make-posn 0 -20))
+                                   (block-placement I (make-posn +3 -20)))
+                           DEFAULT-BAG 0)
+                (make-tet I (list (make-block (make-posn 5 1) "yellow")
+                                  (make-block (make-posn 6 1) "yellow"))
+                          (rest DEFAULT-BAG) 100)))
   (test-suite
    "Clear-row?"
    (test-equal? "1 row; 1 -> #t"
@@ -256,7 +299,7 @@
                 (clear-row! TWO-ROW 1)
                 (list))
    (test-equal? "9 in row + 1 in hand -> empty"
-                (clear-row! (append (list (make-posn 10 1)) (rest ONE-ROW)) 1)
+                (clear-row! (append (list (make-block (make-posn 10 1) "red")) (rest ONE-ROW)) 1)
                 (list))
    (test-equal? "3 row -> empty"
                 (clear-row! THREE-ROW 1)

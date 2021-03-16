@@ -5,7 +5,8 @@
          rackunit/gui
          2htdp/image
          "../end-game.rkt"
-         "../const+aux.rkt")
+         "../const+aux.rkt"
+         "../tetriminos.rkt")
 
 (test/gui
  (test-suite
