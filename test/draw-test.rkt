@@ -3,6 +3,7 @@
          lang/posn
          rackunit/gui
          2htdp/image
+         "tock-test.rkt"
          "../draw.rkt"
          "../const+aux.rkt"
          "../tetriminos.rkt")
@@ -206,7 +207,32 @@
                 (make-block (make-posn -1 21) "light blue")
                 (make-block (make-posn 0 21) "light blue")
                 (make-block (make-posn 1 21) "light blue")
-                (make-block (make-posn 2 21) "light blue")))))
+                (make-block (make-posn 2 21) "light blue"))))
+ (test-suite
+  "ghost-block-pos"
+  (test-equal? "T(0, -10), THREE ROW"
+               (ghost-block-pos (block-placement T (make-posn 0 -10)) THREE-ROW)
+               (block-placement T (make-posn 0 -17)))
+  (test-equal? "O(-4, -15) ONE ROW"
+               (ghost-block-pos (block-placement O (make-posn -4 -15)) ONE-ROW)
+               (block-placement O (make-posn -4 -19)))
+  (test-equal? "I, EMPTY"
+               (ghost-block-pos I (list))
+               (block-placement I (make-posn 0 -20))))
+ (test-suite
+  "ghost-block-col"
+  (test-equal? "T"
+               (ghost-block-col T "gray")
+               (list (make-block (make-posn 5 22) "gray")
+                     (make-block (make-posn 4 21) "gray")
+                     (make-block (make-posn 5 21) "gray")
+                     (make-block (make-posn 6 21) "gray")))
+  (test-equal? "Z"
+               (ghost-block-col Z "gray")
+               (list (make-block (make-posn 4 22) "gray")
+                     (make-block (make-posn 5 22) "gray")
+                     (make-block (make-posn 5 21) "gray")
+                     (make-block (make-posn 6 21) "gray")))))
   
  
 

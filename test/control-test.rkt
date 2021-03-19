@@ -234,7 +234,149 @@
                  #t)
     (test-equal? "I right, 1"
                  (is-at-x? (block-placement I (make-posn 3 -5)) 1)
-                 #f))))
+                 #f))
+   (test-suite
+    "rotate-cw-90"
+    (test-equal? "2 2"
+                 (rotate-cw-90 (make-posn 2 2))
+                 (make-posn 2 -2))
+    (test-equal? "15 -25"
+                 (rotate-cw-90 (make-posn 15 -25))
+                 (make-posn -25 -15)))
+   (test-suite
+    "translation"
+    (test-equal? "10 10, 8 12"
+                 (translation (make-posn 10 10) (make-posn 8 12))
+                 (make-posn -2 2))
+    (test-equal? "7 8, 8 12"
+                 (translation (make-posn 7 8) (make-posn 8 12))
+                 (make-posn 1 4))
+    (test-equal? "0 0, 2 4"
+                 (translation (make-posn 0 0) (make-posn 2 4))
+                 (make-posn 2 4)))
+   (test-suite
+    "rotate!"
+    (test-equal? "Z(0 -10)"
+                 (rotate!
+                  (block-placement Z (make-posn 0 -10))
+                  (make-block (make-posn 5 11) "red"))
+                 (list (make-block (make-posn 5 11) "red")
+                       (make-block (make-posn 6 12) "red")
+                       (make-block (make-posn 6 11) "red")                            
+                       (make-block (make-posn 5 10) "red")))
+    (test-equal? "J(+1 -15)"
+                 (rotate!
+                  (block-placement J (make-posn 1 -15))
+                  (make-block (make-posn 6 6) "dark blue"))
+                 (list (make-block (make-posn 6 6) "dark blue")
+                       (make-block (make-posn 7 7) "dark blue")
+                       (make-block (make-posn 6 7) "dark blue")
+                       (make-block (make-posn 6 5) "dark blue"))))
+   (test-suite
+    "rotate-I!"
+    (test-equal? "I"
+                 (rotate-I! I)
+                 (list (make-block (make-posn 6 22) "light blue")
+                       (make-block (make-posn 6 21) "light blue")
+                       (make-block (make-posn 6 20) "light blue")
+                       (make-block (make-posn 6 19) "light blue")))
+    (test-equal? "rotated I"
+                 (rotate-I! (rotate-I! I))
+                 (list (make-block (make-posn 6 22) "light blue")
+                       (make-block (make-posn 6 21) "light blue")
+                       (make-block (make-posn 6 20) "light blue")
+                       (make-block (make-posn 6 19) "light blue")))
+   (test-suite
+    "Block identifiers"
+    (test-suite
+     "I"
+     (test-suite
+      "is-I?"
+      (test-equal? "I(+1,-5)"
+                   (is-I? (block-placement I (make-posn 1 -5)))
+                   #t)
+      (test-equal? "S(0 -15)"
+                   (is-I? (block-placement S (make-posn 0 -15)))
+                   #f)
+      (test-equal? "rotated I"
+                  (is-I? (rotate! I (make-block (make-posn 5.5 20.5) "light blue")))
+                  #t))
+     (test-suite
+      "all-x?"
+      (test-equal? "I"
+                   (all-x? I)
+                   #f)
+      (test-equal? "O"
+                   (all-x? O)
+                   #f)
+      (test-equal? "rotated I"
+                  (all-x? (rotate! I (make-block (make-posn 5.5 20.5) "light blue")))
+                  #t))
+     (test-suite
+      "all-y?"
+      (test-equal? "I"
+                   (all-y? I)
+                   #t)
+      (test-equal? "T"
+                   (all-y? T)
+                   #f)
+      (test-equal? "rotated I"
+                   (all-y? (rotate! I (make-block (make-posn 5.5 20.5) "light blue")))
+                   #f)))
+    (test-suite
+     "O"
+     (test-suite
+      "is-O?"
+      (test-equal? "O"
+                   (is-O? O)
+                   #t)
+      (test-equal? "rotated O"
+                   (is-O? (rotate! O (make-block (make-posn 5.5 21.5) "yellow")))
+                   #t)
+      (test-equal? "rotated rotated O(-2, -13)"
+                  (is-O? (rotate!
+                          (rotate! (block-placement O (make-posn -2 -13))
+                                   (make-block (make-posn 3.5 8.5) "yellow"))
+                          (make-block (make-posn 3.5 8.5) "yellow")))
+                  #t)
+      (test-equal? "S"
+                   (is-O? S)
+                   #f)
+      (test-equal? "T"
+                   (is-O? T)
+                   #f)
+      (test-equal? "L"
+                   (is-O? L)
+                   #f))
+     (test-suite
+      "rotate-O!"
+      (test-equal? "O"
+                   (rotate-O! O)
+                   (list (make-block (make-posn 6 22) "yellow")
+                         (make-block (make-posn 6 21) "yellow")
+                         (make-block (make-posn 5 22) "yellow")
+                         (make-block (make-posn 5 21) "yellow")))
+      (test-equal? "rotated O"
+                   (rotate-O! (rotate-O! O))
+                   (list (make-block (make-posn 6 21) "yellow")
+                         (make-block (make-posn 5 21) "yellow")
+                         (make-block (make-posn 6 22) "yellow")
+                         (make-block (make-posn 5 22) "yellow"))))
+     (test-suite
+      "pos-eq?"
+      (test-equal? "5 5; 6 5"
+                   (pos-eq? (make-block (make-posn 5 5) "yellow")
+                            (make-block (make-posn 6 5) "yellow"))
+                   #f)
+      (test-equal? "5 5; 5 5"
+                   (pos-eq? (make-block (make-posn 5 5) "yellow")
+                            (make-block (make-posn 5 5) "yellow"))
+                   #t))))))
+                                   
+                   
+                 
+                 
+                 
     
                
     

@@ -8,6 +8,7 @@
          "../const+aux.rkt"
          racket/struct
          "../tetriminos.rkt")
+(provide THREE-ROW ONE-ROW)
 
 ;; need tests for tock
 
@@ -71,45 +72,6 @@
 (test/gui
  (test-suite
   "Tock"
- (test-suite
-  "Tock"
-  (test-suite
-   "Falls"
-(test-equal? "a"  (make-tet (make-posn 1 1) (list)) (make-tet (make-posn 1 1) (list)))
-   (test-equal? "5 21; empty -> 5 20; empty"
-              (tock TOCK-F-EX1)
-              (make-tet (make-posn 5 20) (list)))
-   (test-equal? "5 3; 5 1 -> 5 2; 5 1"
-              (tock TOCK-F-EX2)
-              (make-tet (make-posn 5 2) (list (make-posn 5 1))))
-   (test-equal? "1 10; 1 8 -> 1 9; 1 8"
-              (tock TOCK-F-EX3)
-              (make-tet (make-posn 1 9) (list (make-posn 1 8))))
-   (test-equal? "5 3; blocked from sides -> 5 2; blocked from sides"
-              (tock TOCK-F-EX4)
-              (make-tet (make-posn 5 2) (list (make-posn 4 3) (make-posn 4 2) (make-posn 4 1) (make-posn 6 3)  (make-posn 6 2) (make-posn 6 1) (make-posn 5 1)))))
-  (test-suite
-   "Blocked"
-   (test-equal? "1 2; 1 1 -> 5 22; 1 1, 1 2"
-              (tock TOCK-B-EX1)
-              (make-tet (make-posn 5 22) (list (make-posn 1 1) (make-posn 1 2))))
-   (test-equal? "5 1; empty -> 5 22; 5 1"
-              (tock TOCK-B-EX2)
-              (make-tet (make-posn 5 22) (list (make-posn 5 1))))
-   (test-equal? "10 2; 10 1 -> 5 22; 10 2, 10 1"
-              (tock TOCK-B-EX5)
-              (make-tet (make-posn 5 22) (list (make-posn 10 1) (make-posn 10 2)))))
-  (test-suite
-   "clears row!"
-   (test-equal? "10 1; ONE-ROW excet 10 1 -> 5 22; empty"
-                (tock (make-tet (make-posn 10 1) (rest ONE-ROW)))
-                (make-tet (make-posn 5 22) (list)))
-   (test-equal? "10 2; TWO ROW except 10 2 -> 5 22; empty"
-                (tock (make-tet (make-posn 10 2) (rest TWO-ROW)))
-                (make-tet (make-posn 5 22) (list)))
-   (test-equal? "10 1; TWO ROW except 10 1, 10 2 -> 5 22; ONE-ROW except 10 1"
-                (tock (make-tet (make-posn 10 1) (append (rest ONE-ROW) (rest ONLY-SECOND-ROW))))
-                (make-tet (make-posn 5 22) (rest ONE-ROW)))))
   (test-suite
    "Is-blocked?"
    (test-suite
@@ -354,7 +316,18 @@
                  (easy-sort THREE-ROW))
     (test-equal? "3 row; 2 -> 2 row"
                  (easy-sort (select-below THREE-ROW (list) 2))
-                 (easy-sort TWO-ROW))))))
+                 (easy-sort TWO-ROW)))
+   (test-suite
+    "update-score"
+    (test-equal? "Empty 100"
+                 (update-score (list) 100)
+                 100)
+    (test-equal? "ONE ROW 0"
+                 (update-score ONE-ROW 0)
+                 100)
+    (test-equal? "THREE ROW 500"
+                 (update-score THREE-ROW 500)
+                 800)))))
 
 
 

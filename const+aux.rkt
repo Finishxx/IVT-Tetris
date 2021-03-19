@@ -3,8 +3,6 @@
 (require lang/posn 2htdp/image)
 (provide (all-defined-out))
 
-
-
 ;; ================ DATA DEFINITIONS: ================
 
 (define-struct block [posn col]
@@ -36,7 +34,7 @@
   (/ num 2))
 
 (define PEN
-  (make-pen "black" 1 "solid" "round" "round"))
+  (make-pen "gray" 1 "solid" "round" "round"))
 
 ;; Num Image -> Image
 ;; An auxiliary function for drawing x portion of the grid
@@ -80,7 +78,6 @@
 (define (aux-y-position num)
   (* num CUBE-LENGTH))
 
-
 ;; ================ Mathematical constants (mostly): ================
 (define CUBE-LENGTH 20)
 (define SCENE-WIDTH-INDEX 20)
@@ -100,7 +97,7 @@
 (define X-LINES 20)
 (define Y-LINES 10)
 
-(define CLOCK-SPEED 0.25)
+(define CLOCK-SPEED 0.5)
 
 (define WHITE-SPACE-Y-POS (half (* 5.5 CUBE-LENGTH)))
 
@@ -140,7 +137,6 @@
                              HALF-SCENE-WIDTH
                              (* 27.5 CUBE-LENGTH)
                              PLACED-MTSC))
-
 
 
 (define FINAL-LAYOUT (place-image GRID HALF-SCENE-WIDTH HALF-SCENE-HEIGHT PLACED-MTSC))

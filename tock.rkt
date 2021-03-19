@@ -6,7 +6,6 @@
          "tetriminos.rkt")
 (provide (all-defined-out))
 
-
 ;; conds returning bools don't need to have result-expr, but they can't be in tail position!!
 
 ;; tock:
@@ -16,7 +15,6 @@
 ;; 4. aux-blocked? ✓
 ;; 5. posn-equal? ✓
 ;; 6. clear-row? 
-
 
 ;; Tet -> Tet
 ;; Depending on the posn of the tet-hand block
@@ -118,11 +116,6 @@
 (define (is-ten? blocks y)
   (= 10 (length (select-row blocks y))))
 
-;; Blocks Score -> Score
-;; adds points for clearing a number of rows
-(define (update-score! blocks score)
-  0)
-
 ;; ListOfBlocks -> ListOfBlocks
 ;; changes the value for tet-hand posn(x, y-1)
 (define (fall hand)
@@ -187,3 +180,11 @@
     [(clear-row? blocks 0)
      (update-score! blocks score)]
     [else score]))
+
+;; Blocks Score -> Score
+;; adds points for clearing a number of rows
+(define (update-score! blocks score)
+  (+ score (* 10 (- (length blocks) (length (clear-row! blocks (which-row blocks 1)))))))
+
+
+

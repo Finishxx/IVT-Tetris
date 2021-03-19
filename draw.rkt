@@ -2,7 +2,8 @@
 (require 2htdp/image
          "const+aux.rkt"
          lang/posn
-         "tetriminos.rkt")
+         "tetriminos.rkt"
+         "tock.rkt")
 (provide (all-defined-out))
 
 
@@ -21,9 +22,11 @@
                                                 HALF-SCENE-HEIGHT)
                                      (make-posn HALF-SCENE-WIDTH
                                                 (* CUBE-LENGTH 2.5)))
-                                     (draw-blocks (append (tet-hand tet)
-                                                          (tet-blocks tet))
-                                                  (block-preview (tet-bag tet) PLACED-MTSC-PREVIEW)))))
+                               (draw-blocks (append (tet-hand tet)
+                                                    (tet-blocks tet))
+                                            (ghost-block-draw (tet-hand tet)
+                                                              (tet-blocks tet)
+                                                              (block-preview (tet-bag tet) PLACED-MTSC-PREVIEW))))))
 
 ;; blocks bckg -> Image
 ;; places blocks in accordance with schematic pos given onto bckg
@@ -101,29 +104,23 @@
                CUBE-LENGTH
                img))
 
+;; Hand Blocks -> ListOfPosn
+;; checks every y pos starting from y pos of first block
+;; if is-blocked? returns the current hand
+(define (ghost-block-pos hand blocks)
+  (cond
+    [(is-blocked? hand blocks) hand]
+    [else (ghost-block-pos (block-placement hand (make-posn 0 -1)) blocks)]))
 
-(define J-yes (list (make-block (make-posn -1 -1.25) "dark blue")
-                    (make-block (make-posn -1 -2.25) "dark blue")
-                    (make-block (make-posn 0 -2.25) "dark blue")
-                    (make-block (make-posn 1 -2.25) "dark blue")))
-(define I-yes (list (make-block (make-posn -1 -2.25) "light blue")
-                    (make-block (make-posn 0 -2.25) "light blue")
-                    (make-block (make-posn 1 -2.25) "light blue")
-                    (make-block (make-posn 2 -2.25) "light blue")))
-(define I-second (list (make-block (make-posn 4 -2.25) "light blue")
-                       (make-block (make-posn 5 -2.25) "light blue")
-                       (make-block (make-posn 6 -2.25) "light blue")
-                       (make-block (make-posn 7 -2.25) "light blue")))
-(define I-third (list (make-block (make-posn 9 -2.25) "light blue")
-                      (make-block (make-posn 10 -2.25) "light blue")
-                      (make-block (make-posn 11 -2.25) "light blue")
-                      (make-block (make-posn 12 -2.25) "light blue")))
+;; Hand String -> Hand
+;; returns a list of col blocks, to draw ghost block with
+(define (ghost-block-col hand col)
+  (map (lambda (block)
+         (make-block (block-posn block) col))
+       hand))
 
-(draw-blocks J-yes PLACED-MTSC-PREVIEW)
-(draw-blocks (append J-yes I-second I-third) PLACED-MTSC-PREVIEW)
-
-(place-image (text "120080" 10 "black")
-             (* 17.5 CUBE-LENGTH)
-             CUBE-LENGTH
-             PLACED-MTSC-PREVIEW)
+;; Hand -> IMG
+;; draws a ghost piece
+(define (ghost-block-draw hand blocks img)
+  (draw-blocks (ghost-block-col (ghost-block-pos hand blocks) "light gray") img))
 
